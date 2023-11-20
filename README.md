@@ -78,8 +78,7 @@ In this project, we'll explore the top 400 best-selling video games created betw
 </table>
 <p>Let's begin by looking at some of the top selling video games of all time!</p>
 
-%%sql
-postgresql:///games
+
 
 -- Select all information for the top ten best-selling games
 -- Order the results from best-selling game down to tenth best-selling
@@ -93,43 +92,25 @@ SELECT *
 <p>Wow, the best-selling video games were released between 1985 to 2017! That's quite a range; we'll have to use data from the <code>reviews</code> table to gain more insight on the best years for video games. </p>
 <p>First, it's important to explore the limitations of our database. One big shortcoming is that there is not any <code>reviews</code> data for some of the games on the <code>game_sales</code> table. </p>
 
-%%sql 
 
 -- Join games_sales and reviews
 -- Select a count of the number of games where both critic_score and user_score are null
+
 SELECT COUNT(g.game)
 FROM game_sales g
 LEFT JOIN reviews r
 ON g.game = r.game
 WHERE user_score IS NULL AND critic_score IS NULL;
 
-%%nose
-last_output = _
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (1, 1), \
-    "The query should return just one value, a count of games where both critic_score and user_score are null."
-    assert results.columns.tolist() == ["count"], \
-    'The results should have just one column, called "count".'
-    assert last_output.DataFrame().loc[0, 'count'] == 31, \
-    "There should be 31 games where both critic_score and user_score are null."
-
 ## 3. Years that video game critics loved
 <p>It looks like a little less than ten percent of the games on the <code>game_sales</code> table don't have any reviews data. That's a small enough percentage that we can continue our exploration, but the missing reviews data is a good thing to keep in mind as we move on to evaluating results from more sophisticated queries. </p>
 <p>There are lots of ways to measure the best years for video games! Let's start with what the critics think. </p>
-
-%%sql
 
 -- Select release year and average critic score for each year, rounded and aliased
 -- Join the game_sales and reviews tables
 -- Group by release year
 -- Order the data from highest to lowest avg_critic_score and limit to 10 results
+
 SELECT g.year, ROUND(AVG(r.critic_score),2) AS avg_critic_score
 FROM game_sales g
 LEFT JOIN reviews r
@@ -138,35 +119,14 @@ GROUP BY g.year
 ORDER BY avg_critic_score DESC
 LIMIT 10;
 
-%%nose
-from decimal import Decimal as D
-last_output = _
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (10, 2), \
-    "Make sure to limit the query to only ten results."
-    assert results.columns.tolist() == ["year", "avg_critic_score"], \
-    'The results should have two columns, called "year" and "avg_critic_score".'
-    assert last_output.DataFrame().loc[0, 'year'] == 1990, \
-    "The year with the highest score should be 1990."
-    assert last_output.DataFrame().loc[0, 'avg_critic_score'] == D('9.80'), \
-    "The highest average critic score should be 9.80."
-
 ## 4. Was 1982 really that great?
 <p>The range of great years according to critic reviews goes from 1982 until 2020: we are no closer to finding the golden age of video games! </p>
 <p>Hang on, though. Some of those <code>avg_critic_score</code> values look like suspiciously round numbers for averages. The value for 1982 looks especially fishy. Maybe there weren't a lot of video games in our dataset that were released in certain years. </p>
 <p>Let's update our query and find out whether 1982 really was such a great year for video games.</p>
 
-%%sql 
-
 -- Paste your query from the previous task; update it to add a count of games released in each year called num_games
 -- Update the query so that it only returns years that have more than four reviewed games
+
 SELECT g.year, COUNT(g.game) AS num_games, ROUND(AVG(r.critic_score),2) AS avg_critic_score
 FROM game_sales g
 INNER JOIN reviews r
@@ -175,29 +135,6 @@ GROUP BY g.year
 HAVING COUNT(g.game) > 4
 ORDER BY avg_critic_score DESC
 LIMIT 10;
-
-
-%%nose
-from decimal import Decimal as D
-last_output = _
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (10, 3), \
-    "Make sure to limit the query to only ten results."
-    assert set(last_output.DataFrame().columns) == set(["year", "num_games", "avg_critic_score"]), \
-    'The results should have three columns: "year", "num_games", and "avg_critic_score".'
-    assert last_output.DataFrame().loc[0, 'year'] == 1998, \
-    "The year with the highest score should be 1998."
-    assert last_output.DataFrame().loc[0, 'num_games'] == 10, \
-    "In the year with the highest critic score, there were 10 games released."
-    assert last_output.DataFrame().loc[0, 'avg_critic_score'] == D('9.32'), \
-    "The highest average critic score should be 9.32."
 
 ## 5. Years that dropped off the critics' favorites list
 <p>That looks better! The <code>num_games</code> column convinces us that our new list of the critics' top games reflects years that had quite a few well-reviewed games rather than just one or two hits. But which years dropped off the list due to having four or fewer reviewed games? Let's identify them so that someday we can track down more game reviews for those years and determine whether they might rightfully be considered as excellent years for video game releases!</p>
@@ -252,10 +189,9 @@ def test_results():
 </tbody>
 </table>
 
-%%sql 
-
 -- Select the year and avg_critic_score for those years that dropped off the list of critic favorites 
 -- Order the results from highest to lowest avg_critic_score
+
 SELECT year, avg_critic_score
 FROM top_critic_years
 EXCEPT
@@ -263,34 +199,14 @@ SELECT year, avg_critic_score
 FROM top_critic_years_more_than_four_games
 ORDER BY avg_critic_score DESC;
 
-%%nose
-last_output = _
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (6, 2), \
-    "There should be six years that dropped off the critics' favorite list after implementing the criteria that the year had to have at least five games released to be considered."
-    assert results.columns.tolist() == ["year", "avg_critic_score"], \
-    'The results should have two columns: "year" and "avg_critic_score".'
-    assert last_output.DataFrame().loc[5, 'year'] == 1982, \
-    "The last year returned by the query should be 1982."
-    assert last_output.DataFrame().loc[5, 'avg_critic_score'] == 9.00, \
-    "1982's average critic score should be 9.00."
-
 ## 6. Years video game players loved
 <p>Based on our work in the task above, it looks like the early 1990s might merit consideration as the golden age of video games based on <code>critic_score</code> alone, but we'd need to gather more games and reviews data to do further analysis. </p>
 <p>Let's move on to looking at the opinions of another important group of people: players! To begin, let's create a query very similar to the one we used in Task Four, except this one will look at <code>user_score</code> averages by year rather than <code>critic_score</code> averages.</p>
 
-%%sql 
-
 -- Select year, an average of user_score, and a count of games released in a given year, aliased and rounded
 -- Include only years with more than four reviewed games; group data by year
 -- Order data by avg_user_score, and limit to ten results
+
 SELECT g.year,COUNT(g.game) AS num_games, ROUND(AVG(r.user_score),2) AS avg_user_score
 FROM game_sales g
 INNER JOIN reviews r
@@ -300,27 +216,6 @@ HAVING COUNT(g.game) > 4
 ORDER BY avg_user_score DESC
 LIMIT 10;
 
-
-%%nose
-last_output = _
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (10, 3), \
-    "Don't forget to limit the query results to ten."
-    assert set(results.columns.tolist()) == set(["year", "num_games", "avg_user_score"]), \
-    'The results should have three columns: "year", "num_games", and "avg_user_score".'
-    assert last_output.DataFrame().loc[0, 'year'] == 1997, \
-    "The year with the highest user score should be 1997."
-    assert last_output.DataFrame().loc[0, 'num_games'] == 8, \
-    "In the year with the highest user score, there were eight games released."
-    assert last_output.DataFrame().loc[0, 'avg_user_score'] == 9.50, \
-    "The highest average user score should be 9.50."
 
 ## 7. Years that both players and critics loved
 <p>Alright, we've got a list of the top ten years according to both critic reviews and user reviews. Are there any years that showed up on both tables? If so, those years would certainly be excellent ones!</p>
@@ -381,40 +276,23 @@ def test_results():
 </tbody>
 </table>
 
-%%sql 
-
 -- Select the year results that appear on both tables
+
 SELECT year
 FROM top_critic_years_more_than_four_games
 INTERSECT
 SELECT year
 FROM top_user_years_more_than_four_games;
 
-%%nose
-last_output = _
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (3, 1), \
-    "There should be three years present in both tables."
-    assert results.columns.tolist() == ["year"], \
-    'The results should just have one column: "year".'
-    assert last_output.DataFrame().loc[0, 'year'] == 1998, \
-    "The first year returned by the query should be 1998."
 
 ## 8. Sales in the best video game years
 <p>Looks like we've got three years that both users and critics agreed were in the top ten! There are many other ways of measuring what the best years for video games are, but let's stick with these years for now. We know that critics and players liked these years, but what about video game makers? Were sales good? Let's find out.</p>
 <p>This time, we haven't saved the results from the previous task in a table for you. Instead, we'll use the query from the previous task as a subquery in this one! This is a great skill to have, as we don't always have write permissions on the database we are querying.</p>
 
-%%sql 
 
 -- Select year and sum of games_sold, aliased as total_games_sold; order results by total_games_sold descending
 -- Filter game_sales based on whether each year is in the list returned in the previous task
+
 SELECT year, SUM(games_sold) AS total_games_sold
 FROM game_sales
 WHERE year IN
@@ -426,25 +304,3 @@ WHERE year IN
 GROUP BY year
 ORDER BY total_games_sold DESC; 
 
-
-
-%%nose
-from decimal import Decimal as D
-last_output = _
-
-
-def test_output_type():
-    assert str(type(last_output)) == "<class 'sql.run.ResultSet'>", \
-    "Please ensure an SQL ResultSet is the output of the code cell." 
-
-results = last_output.DataFrame()
-
-def test_results():
-    assert results.shape == (3, 2), \
-    "There should be games sales data for three years: the same three years from the previous query."
-    assert results.columns.tolist() == ["year", "total_games_sold"], \
-    'The results should have two columns: "year" and "total_games_sold".'
-    assert last_output.DataFrame().loc[0, 'year'] == 2008, \
-    "Just like in the last query, the first year returned should be 2008."
-    assert last_output.DataFrame().loc[0, 'total_games_sold'] == D('175.07'), \
-    "In 2008, the total_games_sold value should be 175.07."
